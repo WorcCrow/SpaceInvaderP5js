@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+    <script src="p5.min.js"></script>
+    <script src="game.js"></script>
+</head>
+
+<body>
+
+    <script>
+
+        let enemyImg;
+        let playerImg;
+        let spaceBg;
+        function preload() {
+            enemyImg = loadImage('enemy.png');
+            playerImg = loadImage('player.png');
+            spaceBg = loadImage('space.jpg');
+        }
+
+        bullets = []
+        enemies = []
+        let size
+        let char
+        function setup() {
+            createCanvas(windowWidth - 10, windowHeight - 10)
+            enemyCol = 8
+            enemyRow = 10
+            
+            if(width > height){
+                enemyCol = 15
+                enemyRow = 5
+            }
+            size = width / enemyCol
+            char = new player(size*2,playerImg)
+
+
+            enemyY = 100
+
+            lineX = 0
+            for (j = 1; j < enemyRow; j++) {
+                lineX = 0
+                for (i = 1; i < enemyCol; i++) {
+                    lineX += size
+                    rectMode(CENTER)
+                    enemies.push(new enemy(lineX, enemyY, size / 2,enemyImg))
+                }
+                enemyY += size / 1.5
+            }
+
+        }
+
+        counter = 0
+        function draw() {
+            imageMode(CORNER);
+            image(spaceBg, 0, 0, width, height);
+            textUI()
+
+            //gameOver()
+            //return
+            if(char.life <= 0){
+                gameOver()
+                return
+            }
+            char.posX = mouseX
+            char.show()
+            bullets.forEach((b, i) => {
+                if (b.top()) {
+                    bullets.splice(i, 1)
+                    char.miss++
+                }
+                b.show()
+            })
+
+            enemies.forEach((e, i) => {
+                if(e.bottom(height)){
+                    enemies.splice(i, 1)
+                }
+                if(e.playerHit(char)){
+                    if (trigger) {
+                        char.life--
+                        trigger = false
+                    }
+                }
+                kamikazee = Math.random()*1000
+                if(parseInt(kamikazee) === 500){
+                    e.kamikazee = true
+                    console.log('DRop')
+                }
+                bullets.forEach((b, j) => {
+                    if (e.hit(b)) {
+                        char.hit++
+                        enemies.splice(i, 1)
+                        bullets.splice(j, 1)
+                    }
+                    
+                })
+                e.show()
+            })
+
+            counter++
+            if (counter > 10) {
+                counter = 0
+                trigger = true
+            }
+        }
+
+        function textUI() {
+            noStroke()
+            textSize(20);
+            textAlign(LEFT);
+            text(`Score ${char.hit - char.miss} Hit ${char.hit} Missed ${char.miss}`, 10, 30);
+            text(`Enemy ${enemies.length}`, 10, 60);
+			textAlign(RIGHT);
+            text(`Life ${char.life}`, width - 10, 60);
+        }
+
+        function gameOver(){
+            noStroke('RED')
+            fill(255, 200, 100);
+            textSize(width/10);
+            textAlign(CENTER);
+            text(`Game Over`, width / 2, height/2);
+        }
+
+        trigger = true
+        function mouseClicked() {
+            if (trigger) {
+                bullets.push(new bullet(char.posX, char.posY, size))
+                console.log(bullets.length)
+                trigger = false
+            }
+        }
+    </script>
+
+</body>
+
+</html>
